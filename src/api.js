@@ -1,3 +1,38 @@
+/**
+ * Returns the HTML source ready to be injected into an iframe srcDoc.
+ * If the code already contains a full HTML document it is used as-is;
+ * otherwise it is wrapped in a minimal document.
+ */
+export const runHtml = (code) => {
+  if (/<!doctype\s+html/i.test(code)) {
+    return code;
+  }
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head><body>${code}</body></html>`;
+};
+
+/**
+ * Wraps raw CSS in a minimal HTML document so it can be previewed in an iframe.
+ */
+export const runCss = (code) => {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <style>${code}</style>
+</head>
+<body>
+  <h1>CSS Preview</h1>
+  <p>Your styles are applied to this page.</p>
+  <ul>
+    <li>List item one</li>
+    <li>List item two</li>
+    <li>List item three</li>
+  </ul>
+  <button>Sample Button</button>
+</body>
+</html>`;
+};
+
 export const runJavaScript = (code, inputs = []) => {
   const output = [];
   let inputIndex = 0;

@@ -6,7 +6,7 @@ import {
   useRef,
 } from "react";
 import { Box, Text } from "@chakra-ui/react";
-import { runJavaScript, runPython } from "../api";
+import { runJavaScript, runPython, runHtml, runCss } from "../api";
 
 const Output = forwardRef(({ editorRef, language }, ref) => {
   const [terminal, setTerminal] = useState([]);
@@ -15,9 +15,19 @@ const Output = forwardRef(({ editorRef, language }, ref) => {
   const [waitingForInput, setWaitingForInput] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [expectedInputs, setExpectedInputs] = useState(0);
+  const [previewSrc, setPreviewSrc] = useState(null);
 
   const terminalRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Reset output when language changes
+  useEffect(() => {
+    setTerminal([]);
+    setPreviewSrc(null);
+    setWaitingForInput(false);
+    setInputs([]);
+    setCurrentInput("");
+  }, [language]);
 
   // auto scroll
   useEffect(() => {
@@ -75,11 +85,26 @@ const Output = forwardRef(({ editorRef, language }, ref) => {
     runCode: async () => {
       if (isRunning) return;
 
+      const code = editorRef.current.getValue();
+
+      // HTML / CSS → render in iframe, no terminal
+      if (language === "html") {
+        setPreviewSrc(runHtml(code));
+        setTerminal([]);
+        return;
+      }
+      if (language === "css") {
+        setPreviewSrc(runCss(code));
+        setTerminal([]);
+        return;
+      }
+
+      // JS / Python → terminal output
+      setPreviewSrc(null);
       setTerminal([]);
       setInputs([]);
       setCurrentInput("");
 
-      const code = editorRef.current.getValue();
       const prompts = extractPrompts(code);
       setExpectedInputs(prompts.length);
 
@@ -137,47 +162,73 @@ const Output = forwardRef(({ editorRef, language }, ref) => {
   return (
     <Box flex="1" display="flex" flexDirection="column" p={3}>
       <Box display="flex" justifyContent="space-between">
-        <Text color="#00ffcc">🖥 Terminal</Text>
-        <Text color="red" cursor="pointer" onClick={() => setTerminal([])}>
+        <Text color="#00ffcc">
+          {previewSrc ? "🖼 Preview" : "🖥 Terminal"}
+        </Text>
+        <Text
+          color="red"
+          cursor="pointer"
+          onClick={() => {
+            setTerminal([]);
+            setPreviewSrc(null);
+          }}
+        >
           Clear
         </Text>
       </Box>
 
-      <Box
-        ref={terminalRef}
-        flex="1"
-        bg="black"
-        color="#00ffcc"
-        p={2}
-        fontFamily="monospace"
-        overflowY="auto"
-      >
-        {terminal.map((line, i) => (
-          <Text key={i}>{line}</Text>
-        ))}
+      {previewSrc ? (
+        <Box
+          flex="1"
+          border="1px solid #00ffcc"
+          borderRadius="6px"
+          overflow="hidden"
+          bg="white"
+        >
+          <iframe
+            srcDoc={previewSrc}
+            title="html-css-preview"
+            style={{ width: "100%", height: "100%", border: "none" }}
+            sandbox="allow-scripts allow-popups allow-forms"
+          />
+        </Box>
+      ) : (
+        <Box
+          ref={terminalRef}
+          flex="1"
+          bg="black"
+          color="#00ffcc"
+          p={2}
+          fontFamily="monospace"
+          overflowY="auto"
+        >
+          {terminal.map((line, i) => (
+            <Text key={i}>{line}</Text>
+          ))}
 
-        {waitingForInput && (
-          <Box display="flex">
-            <Text>{"> "}</Text>
-            <input
-              ref={inputRef}
-              autoFocus
-              value={currentInput}
-              onChange={(e) => setCurrentInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleInputSubmit();
-              }}
-              style={{
-                background: "black",
-                color: "#00ffcc",
-                border: "none",
-                outline: "none",
-                flex: 1,
-              }}
-            />
-          </Box>
-        )}
-      </Box>
+          {waitingForInput && (
+            <Box display="flex">
+              <Text>{"> "}</Text>
+              <input
+                ref={inputRef}
+                autoFocus
+                value={currentInput}
+                onChange={(e) => setCurrentInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleInputSubmit();
+                }}
+                style={{
+                  background: "black",
+                  color: "#00ffcc",
+                  border: "none",
+                  outline: "none",
+                  flex: 1,
+                }}
+              />
+            </Box>
+          )}
+        </Box>
+      )}
     </Box>
   );
 });

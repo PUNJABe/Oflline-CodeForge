@@ -45,6 +45,8 @@ onClick={() => onSelect(lang)}
 {/* ✅ Icons */}
 {lang === "javascript" && "🟡 "}
 {lang === "python" && "🐍 "}
+{lang === "html" && "🌐 "}
+{lang === "css" && "🎨 "}
 {lang}
 &nbsp;
 <Text as="span" color="gray.600" fontSize="sm">

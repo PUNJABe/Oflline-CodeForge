@@ -167,6 +167,8 @@ const CodeEditor = () => {
 
       if (name.endsWith(".py")) setLanguage("python");
       else if (name.endsWith(".js")) setLanguage("javascript");
+      else if (name.endsWith(".html") || name.endsWith(".htm")) setLanguage("html");
+      else if (name.endsWith(".css")) setLanguage("css");
 
       setValue(content);
       setFileName(file.name);
@@ -270,7 +272,7 @@ const CodeEditor = () => {
           <input
             id="fileInput"
             type="file"
-            accept=".js,.py,.txt"
+            accept=".js,.py,.html,.htm,.css,.txt"
             style={{ display: "none" }}
             onChange={uploadFile}
           />
